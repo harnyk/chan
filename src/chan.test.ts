@@ -13,8 +13,8 @@ describe('Chan', () => {
     it('allows to push, close and read', async () => {
         const ch = new Chan<number>();
 
-        await ch.push(1);
-        await ch.push(2);
+        await ch.send(1);
+        await ch.send(2);
         await ch.close();
 
         expect(await toArray(ch)).toEqual([1, 2]);
@@ -29,7 +29,7 @@ describe('Chan', () => {
             const result: number[] = [];
             for (let i = 0; i < itemsCount; i++) {
                 await setTimeout(10);
-                await ch.push(i);
+                await ch.send(i);
                 result.push(i);
             }
             await ch.close();
@@ -67,7 +67,7 @@ describe('Chan', () => {
         async function pusher() {
             const result: number[] = [];
             for (let i = 0; i < itemsCount; i++) {
-                await ch.push(i);
+                await ch.send(i);
                 result.push(i);
             }
             await ch.close();
@@ -104,7 +104,7 @@ describe('Chan', () => {
         async function writer() {
             const result: number[] = [];
             for (let i = 0; i < 100; i++) {
-                await ch.push(i);
+                await ch.send(i);
                 result.push(i);
             }
             await ch.close();
@@ -156,7 +156,7 @@ describe('Chan', () => {
         async function writer() {
             const result: number[] = [];
             for (let i = 0; i < 100; i++) {
-                await ch.push(i);
+                await ch.send(i);
                 result.push(i);
             }
             ch.close();
@@ -181,6 +181,6 @@ describe('Chan', () => {
     it('rejects when closed', async () => {
         const ch = new Chan<number>();
         await ch.close();
-        await expect(ch.push(1)).rejects.toThrow(ClosedChanError);
+        await expect(ch.send(1)).rejects.toThrow(ClosedChanError);
     });
 });

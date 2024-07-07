@@ -5,7 +5,10 @@
   "author": "Mark <markharnyk@gmail.com>",
   "type": "module",
   "scripts": {
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules npx jest"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules npx jest",
+    "examples:tour-concurrency-2": "tsx ./src/examples/tour-concurrency-2.ts",
+    "examples:tour-concurrency-3": "tsx ./src/examples/tour-concurrency-3.ts",
+    "examples:tour-concurrency-4": "tsx ./src/examples/tour-concurrency-4.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
@@ -13,6 +16,7 @@
     "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.5",
+    "tsx": "^4.16.2",
     "typescript": "^5.5.3"
   }
 }

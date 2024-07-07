@@ -1,4 +1,6 @@
-import { ResolverQueue, QueueStat } from './resolver-queue';
+import { ResolverQueue, QueueStat } from './resolver-queue.js';
+
+export const ClosedChan = Symbol('ClosedChan');
 
 export class ClosedChanError extends Error {
     constructor() {
@@ -9,7 +11,7 @@ export class ClosedChanError extends Error {
 export type Callback<T> = (value: T) => void;
 
 export interface SendOnlyChan<T> {
-    push(value: T): Promise<void>;
+    send(value: T): Promise<void>;
     close(): Promise<void>;
 }
 
@@ -35,7 +37,7 @@ export class Chan<T> implements SendOnlyChan<T>, ReceiveOnlyChan<T> {
         }
     }
 
-    async push(value: T) {
+    async send(value: T) {
         if (this.isClosed) {
             throw new ClosedChanError();
         }
@@ -50,7 +52,7 @@ export class Chan<T> implements SendOnlyChan<T>, ReceiveOnlyChan<T> {
         } else {
             // Block the writer until we have room in the queue.
             await this.qWriters.block();
-            this.push(value);
+            this.send(value);
         }
     }
 
@@ -70,6 +72,16 @@ export class Chan<T> implements SendOnlyChan<T>, ReceiveOnlyChan<T> {
             writers: this.qWriters.stat,
             data: this._stat,
         };
+    }
+
+    async recv(): Promise<T | typeof ClosedChan> {
+        const iter = this[Symbol.asyncIterator]();
+
+        const { value, done } = await iter.next();
+        if (done) {
+            return ClosedChan;
+        }
+        return value;
     }
 
     [Symbol.asyncIterator](): AsyncIterator<T> {
