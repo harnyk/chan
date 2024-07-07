@@ -2,7 +2,13 @@
   "name": "@harnyk/chan",
   "version": "0.0.3",
   "license": "WTFPL",
+  "private": false,
   "author": "Mark <markharnyk@gmail.com>",
+  "homepage": "https://github.com/harnyk/chan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harnyk/chan.git"
+  },
   "type": "module",
   "scripts": {
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules npx jest",
