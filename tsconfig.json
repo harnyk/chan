@@ -1,0 +1,27 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "lib"
+    ],
+    "compilerOptions": {
+        "outDir": "lib",
+        "rootDir": "src",
+        "declaration": true,
+        "lib": [
+            "es2021"
+        ],
+        "module": "ESNext",
+        "target": "es2021",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "sourceMap": true,
+        "moduleResolution": "node"
+    }
+}

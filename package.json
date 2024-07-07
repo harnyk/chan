@@ -1,20 +1,27 @@
 {
   "name": "@harnyk/chan",
   "version": "0.0.5",
-  "license": "WTFPL",
   "private": false,
-  "author": "Mark <markharnyk@gmail.com>",
   "homepage": "https://github.com/harnyk/chan",
   "repository": {
     "type": "git",
     "url": "https://github.com/harnyk/chan.git"
   },
+  "license": "WTFPL",
+  "author": "Mark <markharnyk@gmail.com>",
   "type": "module",
+  "main": "lib/main.js",
+  "types": "lib/main.d.ts",
+  "files": [
+    "lib"
+  ],
   "scripts": {
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules npx jest",
+    "build": "npx tsc",
+    "prepublishOnly": "npx tsc",
     "examples:tour-concurrency-2": "tsx ./src/examples/tour-concurrency-2.ts",
     "examples:tour-concurrency-3": "tsx ./src/examples/tour-concurrency-3.ts",
-    "examples:tour-concurrency-4": "tsx ./src/examples/tour-concurrency-4.ts"
+    "examples:tour-concurrency-4": "tsx ./src/examples/tour-concurrency-4.ts",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules npx jest"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
