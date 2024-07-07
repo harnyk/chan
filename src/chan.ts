@@ -1,7 +1,5 @@
 import { ResolverQueue, QueueStat } from './resolver-queue.js';
 
-export const ClosedChan = Symbol('ClosedChan');
-
 export class ClosedChanError extends Error {
     constructor() {
         super('Channel is closed');
@@ -74,12 +72,12 @@ export class Chan<T> implements SendOnlyChan<T>, ReceiveOnlyChan<T> {
         };
     }
 
-    async recv(): Promise<T | typeof ClosedChan> {
+    async recv(): Promise<T> {
         const iter = this[Symbol.asyncIterator]();
 
         const { value, done } = await iter.next();
         if (done) {
-            return ClosedChan;
+            throw new ClosedChanError();
         }
         return value;
     }
