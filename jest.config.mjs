@@ -8,7 +8,7 @@ const config = {
     coverageProvider: 'v8',
 
     // exclude lib folder:
-    testPathIgnorePatterns: ['./lib/'],
+    testPathIgnorePatterns: ['./lib/', './dist/'],
 
     // ESM support:
     extensionsToTreatAsEsm: ['.ts'],

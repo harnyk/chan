@@ -178,6 +178,48 @@ describe('Chan', () => {
         expect(normalizedReadersResult).toEqual(writerResult);
     });
 
+    it('supports multiple writers and one reader', async () => {
+        const ch = new Chan<number>();
+
+        async function read() {
+            const readResult: number[] = [];
+            for await (const item of ch) {
+                readResult.push(item);
+            }
+            return readResult;
+        }
+
+        const writers: Promise<number[]>[] = [];
+        for (let i = 0; i < 10; i++) {
+            writers.push(
+                (async () => {
+                    const results: number[] = [];
+                    for (let j = 0; j < 100; j++) {
+                        await ch.send(j);
+                        results.push(j);
+                    }
+                    return results;
+                })()
+            );
+        }
+
+        const [readResult, writersResult] = await Promise.all([
+            read(),
+            Promise.all(writers).then(async (r) => {
+                // close the channel after all writers are done
+                await ch.close();
+                return r;
+            }),
+        ]);
+
+        expect(readResult.length).toEqual(1000);
+
+        const normalizedWritersResult = writersResult
+            .flat()
+            .sort((a, b) => a - b);
+        expect(normalizedWritersResult).toEqual(readResult);
+    });
+
     it('rejects when closed', async () => {
         const ch = new Chan<number>();
         await ch.close();
