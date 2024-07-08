@@ -18,46 +18,41 @@ export interface ReceiveOnlyChan<T> {
 }
 
 export class Chan<T> implements SendOnlyChan<T>, ReceiveOnlyChan<T> {
-    private queue: T[] = [];
-    private qReaders: ResolverQueue<IteratorResult<T>> = new ResolverQueue();
-    private isClosed: boolean = false;
-    private qWriters: ResolverQueue<void> = new ResolverQueue();
+    #queue: T[] = [];
+    #isClosed: boolean = false;
 
-    constructor(private bufferSize = Infinity) {}
+    #qReaders: ResolverQueue<IteratorResult<T>> = new ResolverQueue();
+    #qWriters: ResolverQueue<void> = new ResolverQueue();
 
-    private _stat: QueueStat = {
+    #_stat: QueueStat = {
         peakLength: 0,
     };
 
-    private countStats() {
-        if (this.queue.length > this._stat.peakLength) {
-            this._stat.peakLength = this.queue.length;
-        }
-    }
+    constructor(private bufferSize = Infinity) {}
 
     async send(value: T) {
-        if (this.isClosed) {
+        if (this.#isClosed) {
             throw new ClosedChanError();
         }
 
-        if (this.queue.length < this.bufferSize) {
-            if (this.qReaders.length > 0) {
-                this.qReaders.continue({ value, done: false });
+        if (this.#queue.length < this.bufferSize) {
+            if (this.#qReaders.length > 0) {
+                this.#qReaders.continue({ value, done: false });
             } else {
-                this.queue.push(value);
-                this.countStats();
+                this.#queue.push(value);
+                this.#countStats();
             }
         } else {
             // Block the writer until we have room in the queue.
-            await this.qWriters.block();
+            await this.#qWriters.block();
             this.send(value);
         }
     }
 
     async close() {
-        this.isClosed = true;
+        this.#isClosed = true;
         // Tell the readers that we're done.
-        this.qReaders.continueAll({ value: undefined, done: true });
+        this.#qReaders.continueAll({ value: undefined, done: true });
     }
 
     get stat(): {
@@ -66,39 +61,52 @@ export class Chan<T> implements SendOnlyChan<T>, ReceiveOnlyChan<T> {
         data: Readonly<QueueStat>;
     } {
         return {
-            readers: this.qReaders.stat,
-            writers: this.qWriters.stat,
-            data: this._stat,
+            readers: this.#qReaders.stat,
+            writers: this.#qWriters.stat,
+            data: this.#_stat,
         };
     }
 
-    async recv(): Promise<T> {
-        const iter = this[Symbol.asyncIterator]();
-
-        const { value, done } = await iter.next();
-        if (done) {
-            throw new ClosedChanError();
+    async recv(): Promise<[value: T, ok: true] | [undefined, false]> {
+        if (this.#queue.length > 0) {
+            const value = this.#queue.shift() as T;
+            this.#qWriters.continue();
+            return [value, true];
+        } else if (this.#isClosed) {
+            // Tell a reader that we're done.
+            return [undefined, false];
+        } else {
+            // Block the reader until we have data.
+            const value = await this.#qReaders.block();
+            return [value.value, true];
         }
-        return value;
     }
 
     [Symbol.asyncIterator](): AsyncIterator<T> {
         return {
             next: async () => {
-                if (this.queue.length > 0) {
-                    const value = this.queue.shift() as T;
-                    if (this.qWriters.length > 0) {
-                        this.qWriters.continue();
-                    }
-                    return { value, done: false };
-                } else if (this.isClosed) {
-                    // Tell a reader that we're done.
-                    return { value: undefined, done: true };
-                } else {
-                    // Block the reader until we have data.
-                    return this.qReaders.block();
-                }
+                return this.#next();
             },
         };
+    }
+
+    async #next(): Promise<IteratorResult<T, any>> {
+        if (this.#queue.length > 0) {
+            const value = this.#queue.shift() as T;
+            this.#qWriters.continue();
+            return { value, done: false };
+        } else if (this.#isClosed) {
+            // Tell a reader that we're done.
+            return { value: undefined, done: true };
+        } else {
+            // Block the reader until we have data.
+            return this.#qReaders.block();
+        }
+    }
+
+    #countStats() {
+        if (this.#queue.length > this.#_stat.peakLength) {
+            this.#_stat.peakLength = this.#queue.length;
+        }
     }
 }
