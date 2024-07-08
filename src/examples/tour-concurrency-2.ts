@@ -50,4 +50,4 @@ async function main() {
     console.log(x, y, x + y);
 }
 
-await main();
+main().catch(console.error);

@@ -24,4 +24,4 @@ async function main() {
     console.log(await ch.recv());
 }
 
-await main();
+main().catch(console.error);

@@ -10,17 +10,26 @@
   "license": "WTFPL",
   "author": "Mark <markharnyk@gmail.com>",
   "type": "module",
-  "main": "lib/main.js",
-  "types": "lib/main.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/cjs/main.js",
+      "import": "./lib/esm/main.js"
+    }
+  },
+  "main": "lib/cjs/main.js",
+  "module": "lib/esm/main.js",
+  "types": "lib/esm/main.d.ts",
   "files": [
     "lib"
   ],
   "scripts": {
-    "build": "npx tsc",
-    "prepublishOnly": "npx tsc",
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc --outDir lib/cjs --module commonjs",
+    "build:esm": "tsc --outDir lib/esm --module esnext",
     "examples:tour-concurrency-2": "tsx ./src/examples/tour-concurrency-2.ts",
     "examples:tour-concurrency-3": "tsx ./src/examples/tour-concurrency-3.ts",
     "examples:tour-concurrency-4": "tsx ./src/examples/tour-concurrency-4.ts",
+    "prepublishOnly": "npx tsc",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules npx jest"
   },
   "devDependencies": {

@@ -45,4 +45,4 @@ async function main() {
     }
 }
 
-await main();
+main().catch(console.error);
