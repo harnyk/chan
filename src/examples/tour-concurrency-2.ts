@@ -25,6 +25,7 @@ func main() {
 }
 */
 
+import { ok } from 'assert';
 import { Chan } from '../chan.js';
 
 async function sum(s: number[], c: Chan<number>) {
@@ -42,8 +43,10 @@ async function main() {
     sum(s.slice(0, s.length / 2), c);
     sum(s.slice(s.length / 2), c);
 
-    const x = await c.recv();
-    const y = await c.recv();
+    const [x] = await c.recv();
+    const [y] = await c.recv();
+    ok(x);
+    ok(y);
     console.log(x, y, x + y);
 }
 
