@@ -91,7 +91,7 @@ describe('Chan', () => {
         expect(readResult).toEqual(pushResult);
 
         expect(ch.stat).toEqual({
-            readers: { peakLength: 0 },
+            readers: { peakLength: 1 },
             // because we have only 1 writer and it is quicker than the reader
             writers: { peakLength: 1 },
             data: { peakLength: 5 },
@@ -182,5 +182,27 @@ describe('Chan', () => {
         const ch = new Chan<number>();
         await ch.close();
         await expect(ch.send(1)).rejects.toThrow(ClosedChanError);
+    });
+
+    describe('recv', () => {
+        it('receives data', async () => {
+            const ch = new Chan<number>();
+
+            // Schedule a send in the future.
+            (async () => {
+                await setTimeout(0);
+                ch.send(1);
+            })();
+
+            // Wait for the send to complete.
+            const result = await ch.recv();
+            expect(result).toEqual([1, true]);
+
+            await ch.close();
+
+            // Attempt to receive from a closed channel.
+            const result2 = await ch.recv();
+            expect(result2).toEqual([undefined, false]);
+        });
     });
 });

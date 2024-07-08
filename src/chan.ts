@@ -30,22 +30,35 @@ export class Chan<T> implements SendOnlyChan<T>, ReceiveOnlyChan<T> {
 
     constructor(private bufferSize = Infinity) {}
 
-    async send(value: T) {
+    protected async _readySend(): Promise<void> {
         if (this.#isClosed) {
             throw new ClosedChanError();
         }
-
         if (this.#queue.length < this.bufferSize) {
-            if (this.#qReaders.length > 0) {
-                this.#qReaders.continue({ value, done: false });
-            } else {
-                this.#queue.push(value);
-                this.#countStats();
-            }
+            return;
         } else {
-            // Block the writer until we have room in the queue.
-            await this.#qWriters.block();
-            this.send(value);
+            return this.#qWriters.block();
+        }
+    }
+
+    protected _sendSync(value: T): boolean {
+        if (this.#isClosed) {
+            return false;
+        }
+
+        if (this.#qReaders.length > 0) {
+            this.#qReaders.continue({ value, done: false });
+        } else {
+            this.#queue.push(value);
+            this.#countStats();
+        }
+        return true;
+    }
+
+    async send(value: T) {
+        await this._readySend();
+        if (!this._sendSync(value)) {
+            throw new ClosedChanError();
         }
     }
 
