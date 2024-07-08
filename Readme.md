@@ -10,6 +10,15 @@ This package is my humble attempt to provide a `Chan<T>` class for TypeScript, w
 
 See the [tests](./src/chan.test.ts) and [examples](./src/examples) for more information.
 
+## What is supported
+
+-   asynchronous iterating over `Chan<T>` with `for await`
+-   asynchronous `send` and `recv`
+
+What is not **yet** supported:
+
+-   `select`-ing on `Chan<T>`, i.e., awaiting the write or read readiness without actually sending or receiving anything
+
 ## License
 
 WTFPL
