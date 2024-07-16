@@ -24,32 +24,32 @@ type OpDefault = {
 type Op<T> = OpSend<T> | OpRecv<T> | OpDefault;
 
 class Select {
-    private operations: Array<Op<any>> = [];
+    #operations: Array<Op<any>> = [];
 
     send<T>(channel: Chan<T>, value: T, callback: () => void): this {
-        this.operations.push({ type: OpType.Send, channel, value, callback });
+        this.#operations.push({ type: OpType.Send, channel, value, callback });
 
         return this;
     }
 
     recv<T>(channel: Chan<T>, callback: (value: Maybe<T>) => void): this {
-        this.operations.push({ type: OpType.Recv, channel, callback });
+        this.#operations.push({ type: OpType.Recv, channel, callback });
         return this;
     }
 
     default(callback: () => void): Omit<this, 'default'> {
-        this.operations.push({ type: OpType.Default, callback });
+        this.#operations.push({ type: OpType.Default, callback });
         return this;
     }
 
     promise(): Promise<void> {
         // Select with no operations is a no-op
-        if (this.operations.length === 0) {
+        if (this.#operations.length === 0) {
             return Promise.resolve();
         }
 
         // Try to find an immediately available operation
-        for (const operation of this.operations) {
+        for (const operation of this.#operations) {
             switch (operation.type) {
                 case OpType.Send: {
                     if (operation.channel.canSendImmediately()) {
@@ -73,7 +73,7 @@ class Select {
 
         // If no immediate operation is available, and there is a default
         // operation, execute it
-        const defaultOperation = this.operations.find(
+        const defaultOperation = this.#operations.find(
             (operation) => operation.type === OpType.Default
         );
         if (defaultOperation) {
@@ -86,7 +86,7 @@ class Select {
         const ac = new AbortController();
         const signal = ac.signal;
 
-        const wrappedOperations = this.operations.map((operation) => {
+        const wrappedOperations = this.#operations.map((operation) => {
             switch (operation.type) {
                 case OpType.Send: {
                     return operation.channel
