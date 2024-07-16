@@ -1,4 +1,27 @@
-import { ResolverQueue, QueueStat } from './resolver-queue.js';
+import {
+    RecvChannelClosed,
+    RecvResultInQueue,
+    SelectAPI,
+} from './private-symbols.js';
+import { ResolverQueue, QueueStat, BlockOptions } from './resolver-queue.js';
+
+export interface ChanSelectAPI<T> {
+    readyRecv(
+        blockOptions?: BlockOptions
+    ): Promise<typeof RecvResultInQueue | typeof RecvChannelClosed | Maybe<T>>;
+    readySend(blockOptions?: BlockOptions): Promise<void>;
+    recvSync(): Maybe<T>;
+    sendSync(value: T): boolean;
+}
+export type Nothing = readonly [undefined, false];
+export type Just<T> = readonly [value: T, ok: true];
+export type Maybe<T> = Just<T> | Nothing;
+function nothing() {
+    return [undefined, false] as const;
+}
+function just<T>(value: T) {
+    return [value, true] as const;
+}
 
 export class ClosedChanError extends Error {
     constructor() {
@@ -30,14 +53,18 @@ export class Chan<T> implements SendOnlyChan<T>, ReceiveOnlyChan<T> {
 
     constructor(private bufferSize = Infinity) {}
 
-    protected async _readySend(): Promise<void> {
+    #isBufferless() {
+        return this.bufferSize === 0;
+    }
+
+    protected async _readySend(blockOptions?: BlockOptions): Promise<void> {
         if (this.#isClosed) {
             throw new ClosedChanError();
         }
         if (this.#queue.length < this.bufferSize) {
             return;
         } else {
-            return this.#qWriters.block();
+            return this.#qWriters.block(blockOptions);
         }
     }
 
@@ -80,18 +107,47 @@ export class Chan<T> implements SendOnlyChan<T>, ReceiveOnlyChan<T> {
         };
     }
 
-    async recv(): Promise<[value: T, ok: true] | [undefined, false]> {
+    async #readyRecv(
+        blockOptions?: BlockOptions
+    ): Promise<typeof RecvResultInQueue | typeof RecvChannelClosed | Maybe<T>> {
+        if (this.#queue.length > 0) {
+            return RecvResultInQueue;
+        } else if (this.#isClosed) {
+            return RecvChannelClosed;
+        } else {
+            const iterResult = await this.#qReaders.block(blockOptions);
+            if (iterResult.done) {
+                return nothing();
+            } else {
+                return just(iterResult.value);
+            }
+        }
+    }
+
+    #recvSync(): Maybe<T> {
         if (this.#queue.length > 0) {
             const value = this.#queue.shift() as T;
-            this.#qWriters.continue();
-            return [value, true];
+            if (this.#qWriters.length > 0) {
+                this.#qWriters.continue();
+            }
+            return just(value);
         } else if (this.#isClosed) {
-            // Tell a reader that we're done.
-            return [undefined, false];
+            return nothing();
         } else {
-            // Block the reader until we have data.
-            const value = await this.#qReaders.block();
-            return [value.value, true];
+            return nothing();
+        }
+    }
+
+    async recv(): Promise<Maybe<T>> {
+        const maybeResult = await this.#readyRecv();
+
+        switch (maybeResult) {
+            case RecvChannelClosed:
+                return nothing();
+            case RecvResultInQueue:
+                return this.#recvSync();
+            default:
+                return maybeResult;
         }
     }
 
@@ -103,10 +159,21 @@ export class Chan<T> implements SendOnlyChan<T>, ReceiveOnlyChan<T> {
         };
     }
 
+    [SelectAPI](): ChanSelectAPI<T> {
+        return {
+            readyRecv: this.#readyRecv.bind(this),
+            recvSync: this.#recvSync.bind(this),
+            readySend: this._readySend.bind(this),
+            sendSync: this._sendSync.bind(this),
+        };
+    }
+
     async #next(): Promise<IteratorResult<T, any>> {
         if (this.#queue.length > 0) {
             const value = this.#queue.shift() as T;
-            this.#qWriters.continue();
+            if (this.#qWriters.length > 0) {
+                this.#qWriters.continue();
+            }
             return { value, done: false };
         } else if (this.#isClosed) {
             // Tell a reader that we're done.

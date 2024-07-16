@@ -1,5 +1,5 @@
 import { Chan, ClosedChanError } from './chan';
-import { setTimeout } from 'node:timers/promises';
+import { setTimeout as sleep } from 'node:timers/promises';
 
 async function toArray<T>(iter: AsyncIterable<T>): Promise<T[]> {
     const result: T[] = [];
@@ -28,7 +28,7 @@ describe('Chan', () => {
         async function pusher() {
             const result: number[] = [];
             for (let i = 0; i < itemsCount; i++) {
-                await setTimeout(10);
+                await sleep(10);
                 await ch.send(i);
                 result.push(i);
             }
@@ -77,7 +77,7 @@ describe('Chan', () => {
         async function reader() {
             const result: number[] = [];
             for await (const item of ch) {
-                await setTimeout(10);
+                await sleep(10);
                 result.push(item);
             }
             return result;
@@ -112,7 +112,7 @@ describe('Chan', () => {
         }
 
         async function reader() {
-            await setTimeout(100);
+            await sleep(100);
 
             const result: number[] = [];
             for await (const item of ch) {
@@ -232,7 +232,7 @@ describe('Chan', () => {
 
             // Schedule a send in the future.
             (async () => {
-                await setTimeout(0);
+                await sleep(0);
                 ch.send(1);
             })();
 
@@ -245,6 +245,40 @@ describe('Chan', () => {
             // Attempt to receive from a closed channel.
             const result2 = await ch.recv();
             expect(result2).toEqual([undefined, false]);
+        });
+        it('receives from the channel with non-empty buffer', async () => {
+            const ch = new Chan<number>(5);
+            for (let i = 0; i < 5; i++) {
+                await ch.send(i);
+            }
+
+            for (let i = 0; i < 5; i++) {
+                const result = await ch.recv();
+                expect(result).toEqual([i, true]);
+            }
+        });
+    });
+
+    describe('bufferless channels', () => {
+        it('works with bufferless channels', async () => {
+            const ch = new Chan<number>(0);
+
+            const reader = async () => {
+                for (let i = 0; i < 5; i++) {
+                    console.log('reading');
+                    const result = await ch.recv();
+                    expect(result).toEqual([i, true]);
+                }
+            };
+
+            const writer = async () => {
+                for (let i = 0; i < 5; i++) {
+                    console.log('writing');
+                    await ch.send(i);
+                }
+            };
+
+            await Promise.all([reader(), writer()]);
         });
     });
 });
