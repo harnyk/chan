@@ -1,24 +1,5 @@
+import { Maybe, isNothing, just, nothing, valueOf } from './maybe';
 import { QueueStat, ResolverQueue } from './resolver-queue';
-
-type Maybe<T> = Just<T> | Nothing;
-
-type Just<T> = readonly [T, true];
-type Nothing = readonly [undefined, false];
-function just<T>(value: T): Just<T> {
-    return [value, true];
-}
-function nothing(): Nothing {
-    return [undefined, false];
-}
-function isJust<T>(value: Maybe<T>): value is Just<T> {
-    return value[1];
-}
-function isNothing<T>(value: Maybe<T>): value is Nothing {
-    return !value[1];
-}
-function valueOf<T>(value: Just<T>): T {
-    return value[0];
-}
 
 export class ClosedChanError extends Error {
     constructor() {
@@ -34,7 +15,7 @@ export class Chan<T> {
 
     constructor(protected capacity: number = 0) {}
 
-    async send(value: T): Promise<void> {
+    async send(value: T, signal?: AbortSignal): Promise<void> {
         if (this.closed) {
             throw new ClosedChanError();
         }
@@ -48,13 +29,13 @@ export class Chan<T> {
             this.#countStat();
         } else {
             // If the buffer is full or has zero capacity, block the sender until space is available
-            await this.sendQueue.block();
+            await this.sendQueue.block(signal);
             // Recursively try to send the value again after unblocking
-            return this.send(value);
+            return this.send(value, signal);
         }
     }
 
-    async recv(): Promise<Maybe<T>> {
+    async recv(signal?: AbortSignal): Promise<Maybe<T>> {
         if (this.buffer.length > 0) {
             const value = this.buffer.shift()!;
             if (this.sendQueue.length > 0) {
@@ -68,7 +49,7 @@ export class Chan<T> {
             if (this.sendQueue.length > 0) {
                 this.sendQueue.continue();
             }
-            return await this.recvQueue.block();
+            return await this.recvQueue.block(signal);
         }
     }
 
