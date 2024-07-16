@@ -47,10 +47,10 @@ export class Chan<T> {
             this.buffer.push(value);
             this.#countStat();
         } else {
-            // If the buffer is full or the buffer has zero capacity, block the sender until space is available
+            // If the buffer is full or has zero capacity, block the sender until space is available
             await this.sendQueue.block();
-            // Trying to send the value again recursively
-            await this.send(value);
+            // Recursively try to send the value again after unblocking
+            return this.send(value);
         }
     }
 
