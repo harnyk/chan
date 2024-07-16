@@ -53,7 +53,18 @@ export class Chan<T> {
         }
     }
 
-    async close(): Promise<void> {
+    canSendImmediately(): boolean {
+        return (
+            this.recvQueue.length > 0 ||
+            (this.capacity > 0 && this.buffer.length < this.capacity)
+        );
+    }
+
+    canRecvImmediately(): boolean {
+        return this.sendQueue.length > 0 || this.buffer.length > 0;
+    }
+
+    close(): void {
         this.closed = true;
         this.recvQueue.continueAll(nothing());
     }

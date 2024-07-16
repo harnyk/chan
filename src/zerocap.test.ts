@@ -9,7 +9,7 @@ describe('Zero Capacity Chan', () => {
             for (let i = 0; i < itemsCount; i++) {
                 await ch.send(i);
             }
-            await ch.close();
+            ch.close();
         }
 
         async function reader() {
@@ -53,7 +53,7 @@ describe('Zero Capacity Chan', () => {
         const [readerResults] = await Promise.all([
             Promise.all(readers),
             Promise.all(writers).then(async () => {
-                await ch.close();
+                ch.close();
             }),
         ]);
 
@@ -69,7 +69,7 @@ describe('Zero Capacity Chan', () => {
     it('closes without deadlock when empty', async () => {
         const ch = new Chan<number>(0);
 
-        await ch.close();
+        ch.close();
 
         const result = await ch.recv();
         expect(result).toEqual([undefined, false]);
@@ -77,7 +77,7 @@ describe('Zero Capacity Chan', () => {
 
     it('throws ClosedChanError when sending to a closed channel', async () => {
         const ch = new Chan<number>(0);
-        await ch.close();
+        ch.close();
         await expect(ch.send(1)).rejects.toThrow(ClosedChanError);
     });
 
@@ -88,7 +88,7 @@ describe('Zero Capacity Chan', () => {
             for (let i = 0; i < 10; i++) {
                 await ch.send(i);
             }
-            await ch.close();
+            ch.close();
         }
 
         async function reader() {

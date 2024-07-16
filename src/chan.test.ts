@@ -14,7 +14,7 @@ describe('Chan', () => {
         const ch = new Chan<number>(Number.MAX_SAFE_INTEGER);
         await ch.send(1);
         await ch.send(2);
-        await ch.close();
+        ch.close();
         expect(await toArray(ch)).toEqual([1, 2]);
     });
 
@@ -28,7 +28,7 @@ describe('Chan', () => {
                 await ch.send(i);
                 result.push(i);
             }
-            await ch.close();
+            ch.close();
             return result;
         }
         async function reader() {
@@ -60,7 +60,7 @@ describe('Chan', () => {
                 await ch.send(i);
                 result.push(i);
             }
-            await ch.close();
+            ch.close();
             return result;
         }
         async function reader() {
@@ -94,7 +94,7 @@ describe('Chan', () => {
 
                 result.push(i);
             }
-            await ch.close();
+            ch.close();
             return result;
         }
         async function reader() {
@@ -181,7 +181,7 @@ describe('Chan', () => {
             read(),
             Promise.all(writers).then(async (r) => {
                 // close the channel after all writers are done
-                await ch.close();
+                ch.close();
                 return r;
             }),
         ]);
@@ -194,7 +194,7 @@ describe('Chan', () => {
 
     it('rejects when closed', async () => {
         const ch = new Chan<number>();
-        await ch.close();
+        ch.close();
         await expect(ch.send(1)).rejects.toThrow(ClosedChanError);
     });
 
@@ -209,7 +209,7 @@ describe('Chan', () => {
             // Wait for the send to complete.
             const result = await ch.recv();
             expect(result).toEqual([1, true]);
-            await ch.close();
+            ch.close();
             // Attempt to receive from a closed channel.
             const result2 = await ch.recv();
             expect(result2).toEqual([undefined, false]);

@@ -25,6 +25,5 @@ const config = {
     },
 
     // Coverage:
-    coveragePathIgnorePatterns: ['./src/must.ts'],
 };
 export default config;
