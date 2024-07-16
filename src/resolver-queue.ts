@@ -1,4 +1,4 @@
-import { Callback } from './chan';
+export type Callback<T> = (value: T) => void;
 
 export interface QueueStat {
     peakLength: number;
