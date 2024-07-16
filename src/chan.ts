@@ -27,12 +27,12 @@ export class ClosedChanError extends Error {
 }
 
 export class Chan<T> {
-    private sendQueue = new ResolverQueue<void>();
-    private recvQueue = new ResolverQueue<Maybe<T>>();
-    private buffer: T[] = [];
-    private closed = false;
+    protected sendQueue = new ResolverQueue<void>();
+    protected recvQueue = new ResolverQueue<Maybe<T>>();
+    protected buffer: T[] = [];
+    protected closed = false;
 
-    constructor(private capacity: number = 0) {}
+    constructor(protected capacity: number = 0) {}
 
     async send(value: T): Promise<void> {
         if (this.closed) {

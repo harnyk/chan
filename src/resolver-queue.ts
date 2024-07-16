@@ -4,6 +4,13 @@ export interface QueueStat {
     peakLength: number;
 }
 
+export class AbortSignalError extends Error {
+    name = 'AbortSignalError';
+    constructor() {
+        super('Aborted');
+    }
+}
+
 export class ResolverQueue<T> {
     private queue: Callback<T>[] = [];
 
@@ -21,8 +28,20 @@ export class ResolverQueue<T> {
         return this._stat;
     }
 
-    block() {
-        return new Promise<T>((resolve) => {
+    block(signal?: AbortSignal) {
+        return new Promise<T>((resolve, reject) => {
+            if (signal?.aborted) {
+                reject(new AbortSignalError());
+                return;
+            }
+            if (signal) {
+                signal.addEventListener('abort', () => {
+                    // Remove ourrselves from the queue:
+                    this.queue.splice(this.queue.indexOf(resolve), 1);
+                    reject(new AbortSignalError());
+                });
+            }
+
             this.queue.push(resolve);
             this.countStats();
         });
