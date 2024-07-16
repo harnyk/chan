@@ -1,5 +1,5 @@
-import { Maybe, isNothing, just, nothing, valueOf } from './maybe';
-import { QueueStat, ResolverQueue } from './resolver-queue';
+import { Maybe, isNothing, just, nothing, valueOf } from './maybe.js';
+import { QueueStat, ResolverQueue } from './resolver-queue.js';
 
 export class ClosedChanError extends Error {
     constructor() {

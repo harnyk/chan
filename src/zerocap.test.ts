@@ -1,4 +1,4 @@
-import { Chan, ClosedChanError } from './chan';
+import { Chan, ClosedChanError } from './chan.js';
 
 describe('Zero Capacity Chan', () => {
     it('allows concurrent push and pop without deadlock', async () => {

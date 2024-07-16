@@ -1,7 +1,7 @@
-import { Chan } from './chan';
 import jest from 'jest-mock';
-import { select } from './select';
 import { setTimeout } from 'node:timers/promises';
+import { Chan } from './chan.js';
+import { select } from './select.js';
 
 describe('select', () => {
     describe('minimal example', () => {

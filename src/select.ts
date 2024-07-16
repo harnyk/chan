@@ -1,5 +1,5 @@
-import { Chan } from './chan';
-import { Maybe } from './maybe';
+import { Chan } from './chan.js';
+import { Maybe } from './maybe.js';
 const enum OpType {
     Send = 1,
     Recv,

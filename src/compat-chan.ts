@@ -1,4 +1,4 @@
-import { Chan, ClosedChanError } from './chan';
+import { Chan, ClosedChanError } from './chan.js';
 
 export class CompatChan<T> extends Chan<T> {
     private readyToSend: boolean = false;

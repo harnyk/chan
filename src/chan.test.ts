@@ -1,4 +1,4 @@
-import { Chan, ClosedChanError } from './chan';
+import { Chan, ClosedChanError } from './chan.js';
 import { setTimeout } from 'node:timers/promises';
 
 async function toArray<T>(iter: AsyncIterable<T>): Promise<T[]> {

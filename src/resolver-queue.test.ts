@@ -1,4 +1,4 @@
-import { AbortSignalError, ResolverQueue } from './resolver-queue';
+import { AbortSignalError, ResolverQueue } from './resolver-queue.js';
 import { setImmediate } from 'node:timers/promises';
 
 describe('ResolverQueue', () => {

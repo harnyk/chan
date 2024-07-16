@@ -1,4 +1,4 @@
-import { Chan } from './chan';
+import { Chan } from './chan.js';
 
 describe('Chan - canSendImmediately and canRecvImmediately', () => {
     it('canSendImmediately should return true when there are waiting receivers', async () => {
