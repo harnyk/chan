@@ -1,13 +1,25 @@
 import { Maybe, isNothing, just, nothing, valueOf } from './maybe.js';
 import { QueueStat, ResolverQueue } from './resolver-queue.js';
 
+export interface RecvChan<T> {
+    recv(signal?: AbortSignal): Promise<Maybe<T>>;
+    canRecvImmediately(): boolean;
+    [Symbol.asyncIterator](): AsyncIterableIterator<T>;
+}
+
+export interface SendChan<T> {
+    send(value: T, signal?: AbortSignal): Promise<void>;
+    canSendImmediately(): boolean;
+    close(): void;
+}
+
 export class ClosedChanError extends Error {
     constructor() {
         super('chan is closed');
     }
 }
 
-export class Chan<T> {
+export class Chan<T> implements SendChan<T>, RecvChan<T> {
     protected sendQueue = new ResolverQueue<void>();
     protected recvQueue = new ResolverQueue<Maybe<T>>();
     protected buffer: T[] = [];
@@ -71,7 +83,7 @@ export class Chan<T> {
         this.recvQueue.continueAll(nothing());
     }
 
-    async *range(): AsyncIterableIterator<T> {
+    async *[Symbol.asyncIterator](): AsyncIterableIterator<T> {
         while (true) {
             const result = await this.recv();
             if (isNothing(result)) {
@@ -80,10 +92,6 @@ export class Chan<T> {
 
             yield valueOf(result);
         }
-    }
-
-    [Symbol.asyncIterator](): AsyncIterableIterator<T> {
-        return this.range();
     }
 
     #countStat() {

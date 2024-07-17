@@ -32,10 +32,10 @@ func main() {
 
 */
 
-import { Chan } from '../chan';
+import { Chan, RecvChan, SendChan } from '../chan';
 import { select } from '../select';
 
-async function fibonacci(c: Chan<number>, quit: Chan<number>) {
+async function fibonacci(c: SendChan<number>, quit: RecvChan<number>) {
     let x = 0,
         y = 1;
     for (;;) {

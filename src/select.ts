@@ -1,4 +1,4 @@
-import { Chan } from './chan.js';
+import { RecvChan, SendChan } from './chan.js';
 import { Maybe } from './maybe.js';
 const enum OpType {
     Send = 1,
@@ -8,13 +8,13 @@ const enum OpType {
 
 type OpSend<T> = {
     type: OpType.Send;
-    channel: Chan<T>;
+    channel: SendChan<T>;
     value: T;
     callback: () => void;
 };
 type OpRecv<T> = {
     type: OpType.Recv;
-    channel: Chan<T>;
+    channel: RecvChan<T>;
     callback: (value: Maybe<T>) => void;
 };
 type OpDefault = {
@@ -26,13 +26,13 @@ type Op<T> = OpSend<T> | OpRecv<T> | OpDefault;
 class Select {
     #operations: Array<Op<any>> = [];
 
-    send<T>(channel: Chan<T>, value: T, callback: () => void): this {
+    send<T>(channel: SendChan<T>, value: T, callback: () => void): this {
         this.#operations.push({ type: OpType.Send, channel, value, callback });
 
         return this;
     }
 
-    recv<T>(channel: Chan<T>, callback: (value: Maybe<T>) => void): this {
+    recv<T>(channel: RecvChan<T>, callback: (value: Maybe<T>) => void): this {
         this.#operations.push({ type: OpType.Recv, channel, callback });
         return this;
     }
@@ -42,7 +42,7 @@ class Select {
         return this;
     }
 
-    promise(): Promise<void> {
+    #promise(): Promise<void> {
         // Select with no operations is a no-op
         if (this.#operations.length === 0) {
             return Promise.resolve();
@@ -58,6 +58,7 @@ class Select {
                         });
                         return Promise.resolve();
                     }
+                    break;
                 }
 
                 case OpType.Recv: {
@@ -67,6 +68,7 @@ class Select {
                         });
                         return Promise.resolve();
                     }
+                    break;
                 }
             }
         }
@@ -117,7 +119,7 @@ class Select {
             | null,
         onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
     ): Promise<TResult1 | TResult2> {
-        return this.promise().then(onfulfilled, onrejected);
+        return this.#promise().then(onfulfilled, onrejected);
     }
 }
 
