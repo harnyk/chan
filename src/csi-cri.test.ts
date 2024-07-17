@@ -66,10 +66,10 @@ describe('Chan - canSendImmediately and canRecvImmediately', () => {
         expect(ch.canSendImmediately()).toBe(false);
     });
 
-    it('canRecvImmediately should return false when the channel is closed', async () => {
+    it('canRecvImmediately should return true when the channel is closed', async () => {
         const ch = new Chan<number>(0);
         ch.close();
 
-        expect(ch.canRecvImmediately()).toBe(false);
+        expect(ch.canRecvImmediately()).toBe(true);
     });
 });

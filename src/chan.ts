@@ -61,7 +61,9 @@ export class Chan<T> {
     }
 
     canRecvImmediately(): boolean {
-        return this.sendQueue.length > 0 || this.buffer.length > 0;
+        return (
+            this.closed || this.sendQueue.length > 0 || this.buffer.length > 0
+        );
     }
 
     close(): void {

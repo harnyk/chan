@@ -2,6 +2,7 @@ import jest from 'jest-mock';
 import { setTimeout } from 'node:timers/promises';
 import { Chan } from './chan.js';
 import { select } from './select.js';
+import { nothing } from './maybe.js';
 
 describe('select', () => {
     describe('minimal example', () => {
@@ -235,6 +236,25 @@ describe('select', () => {
     it('should resolve immediately when no operations are available', async () => {
         const log = jest.spyOn(console, 'log');
         await select();
+        log.mockClear();
+    });
+
+    it('should read from a closed chan', async () => {
+        const log = jest.spyOn(console, 'log');
+        const ch0 = new Chan<number>(0);
+        const ch1 = new Chan<number>(0);
+
+        ch0.close();
+
+        await select()
+            .recv(ch1, (value) => {
+                console.log('ch1', value);
+            })
+            .recv(ch0, (value) => {
+                console.log('ch0', value);
+            });
+
+        expect(log.mock.calls).toEqual([['ch0', nothing()]]);
         log.mockClear();
     });
 });
