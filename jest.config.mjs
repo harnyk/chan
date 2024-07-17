@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 const config = {
     testEnvironment: 'node',
-    testTimeout: 30_000,
+    testTimeout: 5_000,
     collectCoverage: true,
     clearMocks: true,
     coverageDirectory: 'coverage',
@@ -25,6 +25,5 @@ const config = {
     },
 
     // Coverage:
-    coveragePathIgnorePatterns: ['./src/must.ts'],
 };
 export default config;

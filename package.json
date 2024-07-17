@@ -27,6 +27,8 @@
     "examples:tour-concurrency-2": "tsx ./src/examples/tour-concurrency-2.ts",
     "examples:tour-concurrency-3": "tsx ./src/examples/tour-concurrency-3.ts",
     "examples:tour-concurrency-4": "tsx ./src/examples/tour-concurrency-4.ts",
+    "examples:tour-concurrency-5": "tsx ./src/examples/tour-concurrency-5.ts",
+    "examples:timer": "tsx ./src/examples/timer.ts",
     "prepublishOnly": "npm run build",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules npx jest"
   },

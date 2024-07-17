@@ -1,18 +1,36 @@
-import { Chan } from './chan';
+import { Chan, ClosedChanError } from './chan.js';
 
-/**
- * Compatibility wrapper for Chan, where send operation is available as
- * a combination of the asynchronous `readySend` and synchronous `sendImmediately`
- *
- * Used entirely as a replacement for the Fifo
- * in @sweepbright/iter-helpers
- */
 export class CompatChan<T> extends Chan<T> {
-    public readySend(): Promise<void> {
-        return this._readySend();
+    private readyToSend: boolean = false;
+
+    constructor(capacity: number = 0) {
+        super(capacity);
     }
 
-    public sendSync(value: T): boolean {
-        return this._sendSync(value);
+    async readySend(): Promise<void> {
+        if (this.capacity > 0 && this.buffer.length < this.capacity) {
+            // If there's space in the buffer, no need to block
+            this.readyToSend = true;
+        } else {
+            await this.sendQueue.block();
+            this.readyToSend = true;
+        }
+    }
+
+    sendSync(value: T): boolean {
+        if (!this.readyToSend) {
+            return false;
+        }
+
+        this.readyToSend = false;
+        this.send(value).catch((error) => {
+            if (error instanceof ClosedChanError) {
+                console.error('Channel is closed');
+            } else {
+                throw error;
+            }
+        });
+
+        return true;
     }
 }

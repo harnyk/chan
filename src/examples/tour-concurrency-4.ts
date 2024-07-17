@@ -34,7 +34,7 @@ async function fibonacci(n: number, c: Chan<number>) {
         [x, y] = [y, x + y];
     }
 
-    await c.close();
+    c.close();
 }
 
 async function main() {
