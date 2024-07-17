@@ -38,7 +38,7 @@ export class Chan<T> implements SendChan<T>, RecvChan<T> {
         } else if (this.capacity > 0 && this.buffer.length < this.capacity) {
             // If the buffer is not full, add the value to the buffer
             this.buffer.push(value);
-            this.#countStat();
+            this.countStat();
         } else {
             // If the buffer is full or has zero capacity, block the sender until space is available
             await this.sendQueue.block(signal);
@@ -94,7 +94,7 @@ export class Chan<T> implements SendChan<T>, RecvChan<T> {
         }
     }
 
-    #countStat() {
+    protected countStat() {
         this.#stat.peakLength = Math.max(
             this.#stat.peakLength,
             this.buffer.length

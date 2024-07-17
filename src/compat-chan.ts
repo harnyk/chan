@@ -1,36 +1,45 @@
 import { Chan, ClosedChanError } from './chan.js';
+import { just } from './maybe.js';
 
 export class CompatChan<T> extends Chan<T> {
-    private readyToSend: boolean = false;
-
     constructor(capacity: number = 0) {
         super(capacity);
     }
 
-    async readySend(): Promise<void> {
-        if (this.capacity > 0 && this.buffer.length < this.capacity) {
-            // If there's space in the buffer, no need to block
-            this.readyToSend = true;
-        } else {
-            await this.sendQueue.block();
-            this.readyToSend = true;
+    /**
+     * Waits until the channel is ready to send data without blocking.
+     * @returns {Promise<void>}
+     */
+    async readySend(signal?: AbortSignal): Promise<void> {
+        if (this.closed) {
+            throw new ClosedChanError();
         }
+
+        if (this.canSendImmediately()) {
+            return;
+        }
+        await this.sendQueue.block(signal);
     }
 
+    /**
+     * Attempts to send a value synchronously. Returns true if successful, false otherwise.
+     * @param {T} value - The value to send.
+     * @returns {boolean}
+     */
     sendSync(value: T): boolean {
-        if (!this.readyToSend) {
-            return false;
+        if (this.closed) {
+            throw new ClosedChanError();
         }
 
-        this.readyToSend = false;
-        this.send(value).catch((error) => {
-            if (error instanceof ClosedChanError) {
-                console.error('Channel is closed');
-            } else {
-                throw error;
-            }
-        });
-
-        return true;
+        if (this.recvQueue.length > 0) {
+            this.recvQueue.continue(just(value));
+            return true;
+        } else if (this.capacity > 0 && this.buffer.length < this.capacity) {
+            this.buffer.push(value);
+            this.countStat();
+            return true;
+        } else {
+            return false;
+        }
     }
 }
