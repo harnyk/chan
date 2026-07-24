@@ -36,7 +36,7 @@ export class ResolverQueue<T> {
             }
             if (signal) {
                 signal.addEventListener('abort', () => {
-                    // Remove ourrselves from the queue:
+                    // Remove ourselves from the queue:
                     this.queue.splice(this.queue.indexOf(resolve), 1);
                     reject(new AbortSignalError());
                 });
